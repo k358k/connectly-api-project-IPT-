@@ -1,10 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from .models import User, Post, Comment
+from django.contrib.auth.models import User  # From instructions
+from .models import Post, Comment
 from .serializers import UserSerializer, PostSerializer, CommentSerializer
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.permissions import IsAuthenticated
+from .permissions import IsPostAuthor
 
-# This class handles getting all users and creating a new one
+# Create Users with Hashed Passwords ---
 class UserListCreate(APIView):
     def get(self, request):
         users = User.objects.all()
@@ -12,14 +16,43 @@ class UserListCreate(APIView):
         return Response(serializer.data)
 
     def post(self, request):
-        serializer = UserSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # We grab the data from the request
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        if not username or not password:
+            return Response({"error": "Username and password required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # We create the user using Django's built-in method which automatically hashes the password
+        user = User.objects.create_user(username=username, password=password)
+        
+        # For debugging:
+        print(user.password) 
+
+        return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+
+# --- Step 2.3: Verify Passwords During Login ---
+from django.contrib.auth import authenticate # From instructions
+
+class LoginView(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+
+        # Use the authenticate method to validate credentials
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            print("Authentication successful!") #
+            return Response({"message": "Authenticated!"})
+        else:
+            print("Invalid credentials.") #
+            return Response({"error": "Invalid credentials."}, status=status.HTTP_401_UNAUTHORIZED)
 
 # This class handles getting all posts and creating a new one
 class PostListCreate(APIView):
+    authentication_classes = [TokenAuthentication] 
+    permission_classes = [IsAuthenticated]          
+
     def get(self, request):
         posts = Post.objects.all()
         serializer = PostSerializer(posts, many=True)
@@ -28,7 +61,8 @@ class PostListCreate(APIView):
     def post(self, request):
         serializer = PostSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save()
+            # IMPORTANT: Link the post to the logged-in user
+            serializer.save(author=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -45,3 +79,17 @@ class CommentListCreate(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+# new class for RBAC
+class PostDetailView(APIView):
+    authentication_classes = [TokenAuthentication]
+    permission_classes = [IsAuthenticated, IsPostAuthor] # Step 3
+
+    def get(self, request, pk):
+        try:
+            post = Post.objects.get(pk=pk)
+            # This line triggers the IsPostAuthor check
+            self.check_object_permissions(request, post)
+            return Response({"content": post.content})
+        except Post.DoesNotExist:
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)    

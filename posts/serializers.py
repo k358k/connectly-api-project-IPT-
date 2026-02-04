@@ -1,10 +1,11 @@
 from rest_framework import serializers
-from .models import User, Post, Comment
+from django.contrib.auth.models import User  
+from .models import Post, Comment
 
-class UserSerializer(serializers.ModelSerializer): 
+class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'created_at']
+        fields = ['id', 'username', 'email'] # Password is EXCLUDED
 
 # This serializer includes related posts for a user
 class PostSerializer(serializers.ModelSerializer):
