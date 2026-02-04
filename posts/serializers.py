@@ -1,11 +1,12 @@
 from rest_framework import serializers
 from .models import User, Post, Comment
 
-class UserSerializer(serializers.ModelSerializer):
+class UserSerializer(serializers.ModelSerializer): 
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'created_at']
 
+# This serializer includes related posts for a user
 class PostSerializer(serializers.ModelSerializer):
     # This allows you to see comments when you view a post
     comments = serializers.StringRelatedField(many=True, read_only=True)
