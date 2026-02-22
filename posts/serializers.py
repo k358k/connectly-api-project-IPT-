@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Post, Comment
+from .models import User, Post, Comment, Like
 
 class UserSerializer(serializers.ModelSerializer): 
     class Meta:
@@ -11,9 +11,14 @@ class PostSerializer(serializers.ModelSerializer):
     # This allows you to see comments when you view a post
     comments = serializers.StringRelatedField(many=True, read_only=True)
 
+    # These fields will show the count of likes and comments for each post
+    like_count = serializers.IntegerField(source='likes.count', read_only=True)
+    comment_count = serializers.IntegerField(source='comments.count', read_only=True)
+
+
     class Meta:
         model = Post
-        fields = ['id', 'content', 'author', 'created_at', 'comments']
+        fields = ['id', 'content', 'author', 'created_at', 'comments', 'like_count', 'comment_count']
 
 class CommentSerializer(serializers.ModelSerializer):
     class Meta:
