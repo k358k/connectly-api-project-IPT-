@@ -1,0 +1,15 @@
+# Python directory with files
+__pycache__/
+*.pyc
+
+# Virtual environment directory
+venv/
+
+# Environment variables files
+.env
+
+# Database files
+*.sqlite3
+
+# IDE directory of json files
+.vscode/
