@@ -1,5 +1,6 @@
 from django.db import models
 
+# This part defines what a "User" looks like in your database
 class User(models.Model):
     username = models.CharField(max_length=100, unique=True)
     email = models.EmailField(unique=True)
@@ -8,16 +9,33 @@ class User(models.Model):
     def __str__(self):
         return self.username
 
+# This part defines what a "Post" looks like and links it to a User
 class Post(models.Model):
+
+    POST_TYPES = (
+        ('image', 'Image'),
+        ('video', 'Video'),
+        ('text', 'Text'),
+    )
+    title = models.CharField(max_length=255, default="Untitled Post")
+
+
     content = models.TextField()
+    # Adding related_name='posts' helps the User model find its posts
     author = models.ForeignKey(User, related_name='posts', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)
 
+    post_type = models.CharField(max_length=10, choices=POST_TYPES, default='text')
+    metadata = models.JSONField(default=dict, blank=True)
+
     def __str__(self):
+        # This matches the specific format in your instructions
         return f"Post by {self.author.username} at {self.created_at}"
 
+# This part defines what a "Comment" looks like and links it to both User and Post
 class Comment(models.Model):
     text = models.TextField()
+    # These related_names are crucial for the Serializers to work later
     author = models.ForeignKey(User, related_name='comments', on_delete=models.CASCADE)
     post = models.ForeignKey(Post, related_name='comments', on_delete=models.CASCADE)
     created_at = models.DateTimeField(auto_now_add=True)

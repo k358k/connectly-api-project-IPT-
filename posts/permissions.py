@@ -1,9 +1,6 @@
-from rest_framework import permissions
+from rest_framework.permissions import BasePermission
 
-class IsPostAuthor(permissions.BasePermission):
+class IsPostAuthor(BasePermission):
     def has_object_permission(self, request, view, obj):
-        # Allow access if user is in 'Admin' group
-        if request.user.groups.filter(name='Admin').exists():
-            return True
-        # Otherwise, only the owner can edit/delete
+        # Step 3: Only allow access if the user is the author
         return obj.author == request.user
