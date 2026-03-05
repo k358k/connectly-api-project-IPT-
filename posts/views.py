@@ -1,15 +1,14 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from django.contrib.auth.models import User  # From instructions
-from .models import Post, Comment
-from .serializers import UserSerializer, PostSerializer, CommentSerializer
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
+
+from django.contrib.auth import authenticate
+from django.contrib.auth.models import User
+from .models import User, Post, Comment, Like
+from .serializers import UserSerializer, PostSerializer, CommentSerializer
 from .permissions import IsPostAuthor
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework import status
 from factories.post_factory import PostFactory
 from singletons.logger_singleton import LoggerSingleton
 
@@ -121,3 +120,28 @@ class CreatePostView(APIView):
         except ValueError as e:
             logger.error(f"Post creation failed: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+# This class handles liking and unliking a post
+class LikePostView(APIView):
+    def post(self, request, post_id):
+        try:
+            post = Post.objects.get(id=post_id)
+        except Post.DoesNotExist:
+            return Response({"error": "Post not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        # Expecting {"user_id": <id>} in the Postman request body
+        user_id = request.data.get('user_id')
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"error": "User not found"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # The Toggle Logic
+        like, created = Like.objects.get_or_create(user=user, post=post)
+
+        if not created:
+            # If the record already existed, delete it (Unlike)
+            like.delete()
+            return Response({"message": "Post unliked"}, status=status.HTTP_200_OK)
+
+        # If it's a new record (Like)
+        return Response({"message": "Post liked"}, status=status.HTTP_201_CREATED)
