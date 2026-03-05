@@ -8,6 +8,10 @@ https://docs.djangoproject.com/en/6.0/howto/deployment/wsgi/
 """
 
 import os
+from dotenv import load_dotenv
+
+# Load .env file for the implementation of google-auth as well
+load_dotenv()
 
 from django.core.wsgi import get_wsgi_application
 
