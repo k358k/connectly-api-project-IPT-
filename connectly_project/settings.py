@@ -9,24 +9,44 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+import os
 from pathlib import Path
+from dotenv import load_dotenv
+from datetime import timedelta
+
+# To properly load .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# SECURITY WARNING: don't run with debug turned on in production!
+
+# A security implementation to protect the integrity of inside the files we set on .env
+SECRET_KEY = os.getenv('SECRET_KEY')
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
+
+# To check that the value of secret_key are set on the .env file (Hidden file-Sensitive Details)
+if not SECRET_KEY:
+    raise ValueError("SECRET_KEY must be set in .env file")
+
+# To verify the credentials on google auth using .env file (Hidden file-Sensitive Details)
+GOOGLE_CLIENT_ID = os.getenv('GOOGLE_CLIENT_ID')
+GOOGLE_CLIENT_SECRET = os.getenv('GOOGLE_CLIENT_SECRET')
+
+# Used to restrict any google account entered on Connectly API sever
+GOOGLE_ALLOWED_DOMAIN = os.getenv('GOOGLE_ALLOWED_DOMAIN')
+
+# Used to verify the google auth credentials we created earlier
+if not GOOGLE_CLIENT_ID:
+    raise ValueError("GOOGLE_CLIENT_ID must be set in .env file")
+if not GOOGLE_CLIENT_SECRET:
+    raise ValueError("GOOGLE_CLIENT_SECRET must be set in .env file")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-0pu7osb+4+-d-)5_5(geij3k7ogng2f@xu(&!ru*h-%k%u&#wo'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = ['localhost', 'mmdc.mcl.edu.ph', '127.0.0.1', 'overoffensive-michal-turgid.ngrok-free.dev']
 
 # Application definition
 
@@ -57,10 +77,11 @@ ROOT_URLCONF = 'connectly_project.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
+                'django.template.context_processors.debug',
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
@@ -82,6 +103,45 @@ DATABASES = {
     }
 }
 
+# Added this to validate the authentication token process. 
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework_simplejwt.authentication.JWTAuthentication', # We changed it from TokenAuthentication to JWTAuthentication
+                                                                     # Because the authentication what is being requested from the postman is our JWT (Internal token) after confirming the identity using the Google token
+                                                                     # This should be created but it is not readable because the Google token is what it reads as already authenticated. 
+        'rest_framework.authentication.SessionAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+SIMPLE_JWT = {
+    # How long the access token lasts before expiring.
+    # Access token is the one used in Postman to make requests.
+    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
+
+    # How long the refresh token lasts.
+    # Refresh token is used to get a new access token without logging in again.
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+
+    # Creates a new refresh token every time the access token is refreshed.
+    # This keeps the session active as long as the user is using the app.
+    'ROTATE_REFRESH_TOKENS': True,
+
+    # Invalidates the old refresh token after a new one is issued.
+    # Prevents the same refresh token from being reused.
+    'BLACKLIST_AFTER_ROTATION': False,
+
+    # The encryption method used to sign the token.
+    'ALGORITHM': 'HS256',
+
+    # The type label stamped inside the access token.
+    'AUTH_HEADER_TYPES': ('Bearer',),
+}
+
+# Added this to identify properly the added or updated models in post/models.py
+AUTH_USER_MODEL = 'posts.User'
 
 # Password validation
 # https://docs.djangoproject.com/en/6.0/ref/settings/#auth-password-validators
@@ -118,3 +178,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# This is where the added models come here
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

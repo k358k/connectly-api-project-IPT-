@@ -1,0 +1,366 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign In - Connectly API{% endblock %}
+
+{% block extra_styles %}
+/* This is to have a proper structure our Connectly-API login page (GUI) */
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+    }
+
+    html, body {
+        height: 100%;
+        width: 100%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 16px;
+    }
+
+    /*This is used to seperate each component in GUI*/
+    .card {
+        background: white;
+        width: 100%;
+        max-width: 420px;
+        border-radius: 20px;
+        box-shadow: 0 16px 48px rgba(0,0,0,0.28);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* This is a structure in which used to have a proper display for header element */
+    .card-header {
+        padding: 18px 20px 0;
+        display: flex;
+        justify-content: center;
+        flex-shrink: 0;
+        background: white;
+    }
+
+    .card-header h1 {
+        background: linear-gradient(135deg, #4a3aff 0%, #764ba2 100%);
+        font-size: 15px;
+        font-weight: 800;
+        color: white;
+        letter-spacing: -0.3px;
+        padding: 8px 28px;
+        border-radius: 50px;
+        display: inline-block;
+        box-shadow: 0 4px 14px rgba(74,58,255,0.3);
+    }
+
+    /* This is a structure in which used to have a proper seperation from the body element with their corresponding alignment below */
+    .card-body {
+        padding: 20px 24px;
+        flex: 1;
+    }
+
+    /* WELCOME TITLE */
+    .title {
+        text-align: center;
+        margin-bottom: 16px;
+    }
+
+    .title .welcome {
+        font-size: 17px;
+        font-weight: 700;
+        color: #1a1a2e;
+    }
+
+    .title .sub {
+        font-size: 12px;
+        color: #888;
+        margin-top: 3px;
+    }
+
+    /* This is a sign-in button from google for login page in which any users clicked for window transfer (GUI) */
+    .google-container {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 14px;
+        margin-bottom: 14px;
+        border: 1.5px solid #e0e0e0;
+        display: flex;
+        justify-content: center;
+    }
+
+    /* This is an error messages structure allows to pop-up in which users used to access any gmail account beyond the scope of the domain set or domain restriction */
+    .error-card {
+        background: linear-gradient(135deg, #ffebee, #ffcdd2);
+        border: 2px solid #f44336;
+        border-radius: 12px;
+        padding: 14px 16px;
+        margin-bottom: 14px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(244,67,54,0.15);
+    }
+
+    .error-card p {
+        color: #b71c1c;
+        font-size: 13px;
+        font-weight: 500;
+        margin: 0;
+    }
+
+    .error-card .domain-name {
+        font-weight: 700;
+        color: #d32f2f;
+        background: rgba(255,255,255,0.5);
+        padding: 4px 8px;
+        border-radius: 20px;
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 12px;
+    }
+
+    /* After verifying the account of the user, they will move here to these setup and like to be indicated as authenticated users or verified users */
+    .user-card {
+        background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
+        border: 2px solid #4caf50;
+        border-radius: 12px;
+        padding: 12px 16px;
+        margin-bottom: 14px;
+        text-align: center;
+        box-shadow: 0 4px 12px rgba(76,175,80,0.15);
+    }
+
+    .user-card .name {
+        font-size: 15px;
+        font-weight: 700;
+        color: #2e7d32;
+    }
+
+    .user-card .email {
+        font-size: 12px;
+        color: #388e3c;
+        margin-top: 2px;
+    }
+
+    /* This a alignment of token in which verified users direct to these setup */
+    .token-card {
+        background: linear-gradient(135deg, #f0f4ff, #e6ecff);
+        border: 2px solid #4a3aff;
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 4px;
+        text-align: center;
+        box-shadow: 0 6px 18px rgba(74,58,255,0.12);
+    }
+
+    .token-card h2 {
+        color: #4caf50;
+        font-size: 14px;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .token-preview {
+        background: white;
+        border: 1.5px solid #4a3aff;
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-family: 'Courier New', monospace;
+        font-size: 10px;
+        text-align: left;
+        word-break: break-all;
+        max-height: 100px;
+        overflow-y: auto;
+        margin-bottom: 10px;
+        line-height: 1.5;
+    }
+
+    .token-preview strong {
+        color: #4a3aff;
+        display: block;
+        margin-bottom: 5px;
+        font-size: 11px;
+    }
+
+    .token-length {
+        color: #444;
+        font-size: 12px;
+        padding: 6px 10px;
+        background: rgba(74,58,255,0.06);
+        border-radius: 8px;
+        margin-bottom: 12px;
+    }
+
+    /* This is a token button structure in which verified users after successfully clicked, it will appear the success message "Copied to clipboard" something like this */
+    .copy-btn {
+        background: linear-gradient(135deg, #4a3aff, #3367d6);
+        color: white;
+        border: none;
+        border-radius: 50px;
+        padding: 10px 28px;
+        font-size: 13px;
+        font-weight: 700;
+        cursor: pointer;
+        box-shadow: 0 4px 14px rgba(74,58,255,0.3);
+        transition: all 0.2s;
+    }
+
+    .copy-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(74,58,255,0.4);
+    }
+
+    /* SUCCESS MESSAGE */
+    .success-msg {
+        background: #4caf50;
+        color: white;
+        border-radius: 50px;
+        padding: 6px 14px;
+        margin-top: 8px;
+        font-size: 12px;
+        display: none;
+        animation: fadeIn 0.3s;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(4px); }
+        to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* This is our structure for bottom part description in Connectly API as an conclusion */
+    .card-footer {
+        background: linear-gradient(135deg, #4a3aff 0%, #764ba2 100%);
+        padding: 11px 20px;
+        text-align: center;
+        flex-shrink: 0;
+    }
+
+    .card-footer p {
+        color: rgba(255,255,255,0.85);
+        font-size: 11px;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <!-- This is the results of our structure above -->
+    <div class="card-header">
+        <h1>⚡ Connectly API</h1>
+    </div>
+
+    <div class="card-body">
+
+        <div class="title">
+            <div class="welcome">Welcome Back</div>
+            <div class="sub">Sign in to your Connectly account</div>
+        </div>
+        
+        <!-- For data-client_id: This is an unique identifier in for every developer to setup their GoogleAuth to their API structure -->
+        <!-- For data-login_uri: This our URL in which users direct to login page --> 
+        <!-- For data-ux_mode: Sets Google Sign-In to redirect mode, which routes users 
+             through accounts.google.com/gsi/transform before returning to the login URI -->
+        <div id="g_id_onload"
+             data-client_id="{{ google_client_id }}"
+             data-login_uri="https://overoffensive-michal-turgid.ngrok-free.dev/login/"
+             data-context="signin"
+             data-ux_mode="redirect"
+             data-auto_select="false"
+             data-itp_support="true">
+        </div>
+
+        <div class="google-container">
+            <div class="g_id_signin"
+                 data-type="standard"
+                 data-size="large"
+                 data-theme="outline"
+                 data-text="sign_in_with"
+                 data-shape="rectangular"
+                 data-logo_alignment="left"
+                 data-width="280">
+            </div>
+        </div>
+
+        {% if id_token %}
+        <input type="hidden" id="tokenValue" value="{{ id_token|safe }}">
+        {% endif %}
+
+        <!-- This is a method in which used specifies the users beyond the scope of specific domain allowed which is MMDC users only allowed to login 
+             Or else will appear an error specific message that your account is not allowed to login like it does not permit the policy for the set standard -->
+        {% if error %}
+        <div class="error-card">
+            <p>{{ error }}</p>
+            {% if allowed_domain %}
+            <div class="domain-name">@{{ allowed_domain }}</div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        {% if user_email %}
+        <div class="user-card">
+            <div class="name">{{ user_name }}</div>
+            <div class="email">{{ user_email }}</div>
+        </div>
+        {% endif %}
+
+        {% if id_token %}
+        <div class="token-card">
+            <h2>✅ Authenticated Successfully!</h2>
+            <div class="token-preview">
+                <strong>Token Preview:</strong>
+                {{ id_token|slice:":250" }}...
+            </div>
+            <div class="token-length">
+                <strong>Length:</strong> {{ id_token|length }} characters
+            </div>
+            <button class="copy-btn" onclick="copyToken()">
+                📋 Copy Full Token
+            </button>
+            <div id="copySuccess" class="success-msg">
+                ✅ Copied to clipboard!
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- This is our conclusion our additional message to attract users for better user interface -->
+    <div class="card-footer">
+        <p>⚡ Connectly — Where your API meets the conversation on the line</p>
+    </div>
+
+</div>
+
+<script>
+    // This is to fix an issue where user cannot go back to the default login page instead they will direct the same path of window no interaction 
+    // Finally the user can now refresh and it will direct to the default login page 
+    if (performance.getEntriesByType('navigation')[0]?.type === 'reload') {
+        window.location.replace(window.location.pathname);
+    }
+    // These copies the full token to the clipboard and shows a success message for 3 seconds
+    function copyToken() {
+        const tokenInput = document.getElementById('tokenValue');
+        if (tokenInput) {
+            const token = tokenInput.value;
+            navigator.clipboard.writeText(token).then(() => {
+                const success = document.getElementById('copySuccess');
+                success.style.display = 'block';
+                setTimeout(() => { success.style.display = 'none'; }, 3000);
+            }).catch(() => {
+                const textArea = document.createElement('textarea');
+                textArea.value = token;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('✅ Token copied to clipboard!');
+            });
+        }
+    }
+</script>
+{% endblock %}
