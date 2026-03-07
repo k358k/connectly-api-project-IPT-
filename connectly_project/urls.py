@@ -19,5 +19,6 @@ from django.urls import path, include
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('posts/', include('posts.urls')), # This connects your posts app
+    path('posts/', include('posts.urls')), 
+    path('', include('posts.urls')), # <--- Add this line to handle root URLs
 ]
