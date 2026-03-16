@@ -1,6 +1,6 @@
 from posts.models import User, ExternalAuthProvider
 from django.db import transaction
-# add this for temporary testing the database error in our view.py for the line 297: from django.db import IntegrityError 
+# add this for temporary testing the database error in our view.py for the line 516-521: from django.db import IntegrityError, DatabaseError
 import logging
 
 logger = logging.getLogger(__name__)
@@ -9,7 +9,7 @@ logger = logging.getLogger(__name__)
 class UserService:
     
     def find_or_create_user(self, google_claims):
-        # Add this syntax for testing the database error: raise IntegrityError("Forced duplicate for testing")
+        # Add this syntax for testing the integrity or database error: raise IntegrityError("Forced duplicate for testing") or raise DatabaseError("Forced database error for testing") 
         google_id = google_claims['google_id']
         email = google_claims['email']
         

@@ -11,7 +11,49 @@ class User(AbstractUser):
         default='local'
     )
     profile_picture = models.URLField(blank=True, null=True)
+
+    # ── HW8 ADDED: Role field ─────────────────────────────────────────────────
+
+    # We use TextChoices for CharField instead of IntegerField because:
+    #   - CharField stores human-readable strings such as "admin" directly in
+    #     the database, while IntegerField stores numbers such as 1, 2, and 3
+    #     which require a separate lookup just to understand what they mean
+    #   - IntegerField is risky because if you reorder the list, all the values
+    #     shift as well. For example, what was 1=admin could accidentally become
+    #     1=superadmin without anyone knowing it or understanding it clearly
+    #   - TextChoices strictly validates the input, which means invalid values
+    #     such as "ADMIN" in the wrong case or "superadmin" as an undefined role
+    #     will never be allowed to be saved into the database
+    # TextChoices is a Django feature that extends Python's str and Enum types,
+    # offering a structured and readable way to define choices for CharField.
     
+    # About default='user' and what get role='user' means:
+    #   Imagine you already have 10 existing users in your database before this
+    #   new role field was added. Those users never had a role assigned to them
+    #   because the role feature did not exist yet at the time they were created.
+    #   When you run the migration to add this new role column, Django needs to
+    #   decide what value to fill in for those 10 users who never had a role.
+    #   This is where default='user' comes in. It tells Django to automatically
+    #   fill in the value 'user' for every existing row that does not have a
+    #   role yet. So after the migration runs, all 10 existing users will now
+    #   have role='user' assigned to them without you having to do anything
+    #   manually. This also means no existing data is deleted or lost in the
+    #   process which is exactly what we call zero data loss and it is the
+    #   reason we chose Option 2 of our migration strategy over Option 1
+    #   which would have required clearing and re-populating the database.
+
+    class Role(models.TextChoices):
+        ADMIN = 'admin', 'Admin'
+        USER  = 'user',  'User'
+        GUEST = 'guest', 'Guest'
+
+    role = models.CharField(
+        max_length=10,
+        choices=Role.choices,
+        default=Role.USER,
+    )
+    # ── END HW8 ADDED ─────────────────────────────────────────────────────────
+
     # Adding groups and permissions field to avoid the old user model from being identified to new model which "AbstractUser" model
     groups = models.ManyToManyField(
         'auth.Group',
@@ -52,7 +94,6 @@ class Post(models.Model):
     )
     title = models.CharField(max_length=255, default="Untitled Post")
 
-
     content = models.TextField()
     # Adding related_name='posts' helps the User model find its posts
     author = models.ForeignKey(User, related_name='posts', on_delete=models.CASCADE)
@@ -60,6 +101,51 @@ class Post(models.Model):
 
     post_type = models.CharField(max_length=10, choices=POST_TYPES, default='text')
     metadata = models.JSONField(default=dict, blank=True)
+
+    # ── HW8 ADDED: Privacy field ──────────────────────────────────────────────
+
+    # We use TextChoices for CharField for the same reasons as the Role field
+    # above. It stores human-readable strings, prevents invalid values from
+    # being saved, and gives us a structured way to define choices.
+    
+    # About default='public' and what backwards compatibility means:
+    #   Imagine you already have 50 existing posts in your database before this
+    #   new privacy field was added. Those posts never had a privacy setting
+    #   assigned to them because the privacy feature did not exist yet at the
+    #   time they were created. When you run the migration to add this new
+    #   privacy column, Django needs to decide what value to fill in for those
+    #   50 posts that never had a privacy setting.
+    #   This is where default='public' comes in. It tells Django to
+    #   automatically fill in the value 'public' for every existing post that
+    #   does not have a privacy setting yet. This is intentional because those
+    #   posts were created when everything was visible to everyone and the
+    #   authors never chose to make them private. If we had used default='private'
+    #   instead, all 50 existing posts would suddenly become invisible to every
+    #   user the moment the migration runs, even though the authors never asked
+    #   for that. That would be an unintended consequence that breaks the
+    #   experience for everyone using the application. By using default='public'
+    #   we make sure existing posts continue to behave exactly the way they
+    #   always did which is what we call backwards compatibility.
+    class Privacy(models.TextChoices):
+        PUBLIC  = 'public',  'Public'
+        PRIVATE = 'private', 'Private'
+
+    privacy = models.CharField(
+        max_length=10,
+        choices=Privacy.choices,
+        default=Privacy.PUBLIC,
+    )
+    # ── END HW8 ADDED ─────────────────────────────────────────────────────────
+    class Privacy(models.TextChoices):
+        PUBLIC  = 'public',  'Public'
+        PRIVATE = 'private', 'Private'
+
+    privacy = models.CharField(
+        max_length=10,
+        choices=Privacy.choices,
+        default=Privacy.PUBLIC,
+    )
+    # ── END HW8 ADDED ─────────────────────────────────────────────────────────
 
     def __str__(self):
         # This matches the specific format in your instructions
