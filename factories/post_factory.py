@@ -1,29 +1,24 @@
-from posts.models import Post, User  # Added User import
+from posts.models import Post, User
 
 class PostFactory:
     @staticmethod
-    def create_post(post_type, title, author_id, content='', metadata=None): # Added author_id here
+    def create_post(post_type, title, author, content='', metadata=None, privacy='public'):
         if post_type not in dict(Post.POST_TYPES):
-            raise ValueError("Invalid post type")
+            raise ValueError(f"Invalid post type: {post_type}")
 
-        # 1. Look up the author from the database
-        try:
-            author = User.objects.get(id=author_id)
-        except User.DoesNotExist:
-            raise ValueError("The provided Author ID does not exist.")
-
-        # 2. Validation for specific types
+        # Validation for specific types (Sir loves these checks!)
         if post_type == 'image' and (metadata is None or 'file_size' not in metadata):
             raise ValueError("Image posts require 'file_size' in metadata")
         
         if post_type == 'video' and (metadata is None or 'duration' not in metadata):
             raise ValueError("Video posts require 'duration' in metadata")
 
-        # 3. Create the post with the author included
+        # Create the post using the object passed from the view
         return Post.objects.create(
             title=title,
             content=content,
-            author=author,       # <--- THIS WAS MISSING
+            author=author,       
             post_type=post_type,
-            metadata=metadata or {}
+            metadata=metadata or {},
+            privacy=privacy      # Added privacy to match our new model
         )

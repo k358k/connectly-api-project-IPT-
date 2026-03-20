@@ -6,29 +6,31 @@ from .views import (
     PostListCreate, 
     PostDetailView, 
     CreatePostView, 
-    CommentListCreate, 
+    CommentListCreate,
+    CommentDetailView,
     LikePostView,
-    NewsFeedView  # <--- CRITICAL: Added for HW 7
+    NewsFeedView
 )
 
 urlpatterns = [
-    # User and Local Auth
+    # --- User and Auth ---
     path('users/', UserListCreate.as_view(), name='user-list'),
     path('login/', LoginView.as_view(), name='login'), 
-    
-    # Third-Party / Google Auth (HW 6)
-    # Testing link: http://127.0.0.1:8000/posts/auth/google/login/
     path('auth/google/login/', views.google_login, name='google_login'),
-    path('debug-token/', views.debug_token, name='debug-token'),
     
-    # Posts & News Feed (HW 7)
-    # Testing link: http://127.0.0.1:8000/posts/feed/
+    # --- News Feed (Optimized & Paginated) ---
+    path('feed/', NewsFeedView.as_view(), name='news-feed'),
+
+    # --- Posts ---
     path('posts/', PostListCreate.as_view(), name='post-list'),
-    path('feed/', NewsFeedView.as_view(), name='news-feed'), # <--- CRITICAL: Added for HW 7
     path('posts/<int:pk>/', PostDetailView.as_view(), name='post-detail'),
-    path('create-post/', CreatePostView.as_view(), name='create-post'),
+    # Highlight this during demo: "Our Factory Pattern endpoint"
+    path('posts/create-factory/', CreatePostView.as_view(), name='create-post-factory'), 
     
-    # Interactions
-    path('comments/', CommentListCreate.as_view(), name='comment-list-create'),
+    # --- Interactions (Likes & Comments) ---
+    # Instructor Feedback Fix: Ensuring 'like' and 'comment' endpoints follow the {post_id} pattern
     path('posts/<int:post_id>/like/', LikePostView.as_view(), name='like-post'),
+    path('posts/<int:post_id>/comment/', CommentListCreate.as_view(), name='comment-create'),
+    path('posts/<int:post_id>/comments/', CommentListCreate.as_view(), name='comment-list'),
+    path('posts/<int:post_id>/comments/<int:comment_id>/', CommentDetailView.as_view(), name='comment-detail'),
 ]

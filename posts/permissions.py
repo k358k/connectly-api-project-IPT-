@@ -1,21 +1,36 @@
 from rest_framework import permissions
 
-# Version from MS-1 (Strict)
 class IsPostAuthor(permissions.BasePermission):
     def has_object_permission(self, request, view, obj):
-        # Only allow access if the user is the author
         return obj.author == request.user
 
-# Version from MS-2 (Allows public viewing, but restricted editing)
 class IsAuthorOrReadOnly(permissions.BasePermission):
-    """
-    Object-level permission to only allow authors of an object to edit it.
-    Assumes the model instance has an `author` attribute.
-    """
     def has_object_permission(self, request, view, obj):
-        # Read-only permissions are allowed for any request
         if request.method in permissions.SAFE_METHODS:
             return True
-        
-        # Write permissions are only allowed to the author of the post
         return request.user.is_authenticated and obj.author == request.user
+
+class IsAdminRole(permissions.BasePermission):
+    message = 'Access denied. Admin role required.'
+    def has_permission(self, request, view):
+        return request.user and request.user.is_authenticated and request.user.role == 'admin'
+
+class IsOwnerOrAdmin(permissions.BasePermission):
+    message = 'Access denied. You must be the post owner or an admin.'
+    def has_object_permission(self, request, view, obj):
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.user.role == 'admin':
+            return True
+        return obj.author == request.user
+
+class PostPrivacyPermission(permissions.BasePermission):
+    message = 'This post is private. Only the owner can view it.'
+    def has_object_permission(self, request, view, obj):
+        if obj.privacy == 'public':
+            return True
+        if not request.user or not request.user.is_authenticated:
+            return False
+        if request.user.role == 'admin':
+            return True
+        return obj.author == request.user
