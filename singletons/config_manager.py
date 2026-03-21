@@ -9,9 +9,10 @@ class ConfigManager:
 
     def _initialize(self):
         self.settings = {
-            "DEFAULT_PAGE_SIZE": 20,
+            "DEFAULT_PAGE_SIZE": 5,
+            "CACHE_TIMEOUT": 60,
             "ENABLE_ANALYTICS": True,
-            "RATE_LIMIT": 100
+            "RATE_LIMIT": 100,
         }
 
     def get_setting(self, key):
